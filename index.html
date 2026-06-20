@@ -1,21 +1,402 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>MangaHub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MangAFliX</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
+
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <script>
-        if(localStorage.getItem("token")){
-            location.href = "dashboard.html";
-        }else{
-            location.href = "login.html";
-        }
-    </script>
+    <script src="js/api.js"></script>
+    <script src="js/stores/route.js"></script>
+    <script src="js/stores/auth.js"></script>
+    <script src="js/stores/notifications.js"></script>
+    <script src="js/stores/reader.js"></script>
+    <script src="js/stores/theme.js"></script>
+    <script src="js/login.js"></script>
+    <script src="js/register.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/manga-create.js"></script>
+    <script src="js/manga-detail.js"></script>
+    <script src="js/chapter-create.js"></script>
+    <script src="js/reader.js"></script>
 </head>
-<body><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<body class="bg-[#F8F9FA] dark:bg-slate-900 text-[#4A5568] dark:text-slate-300 transition-colors duration-300">
+
+<div id="app" x-data="appShell()" class="min-h-screen">
+
+    <nav x-show="$store.auth.token" class="bg-slate-800 dark:bg-slate-950 text-white px-4 py-3 flex items-center justify-between shadow-lg">
+        <div class="flex items-center gap-3">
+            <img src="assets/mizuki_kuramacb.jpg" alt="Mascota" class="w-10 h-10 rounded-full object-cover border-2 border-[#6C63FF] shadow-md">
+            <span class="logo font-bold text-2xl text-white">MangAFliX</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-sm text-slate-300" x-text="$store.auth.user?.username || 'Usuario'"></span>
+            <button @click="$store.theme.toggle()" class="text-white hover:text-[#6C63FF] transition p-2 rounded-full hover:bg-white/10">
+                <i class="fas" :class="$store.theme.dark ? 'fa-sun' : 'fa-moon'"></i>
+            </button>
+            <button @click="$store.auth.logout()" class="bg-[#FF6B6B] hover:bg-red-700 px-4 py-2 rounded-xl text-sm font-medium transition shadow-md hover:shadow-lg">
+                <i class="fas fa-sign-out-alt mr-1"></i> Salir
+            </button>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+
+        <template x-if="$store.route.component === 'login'">
+            <div x-data="loginPage()" x-transition.duration.300ms>
+                <div class="max-w-md mx-auto mt-10 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                    <div class="text-center mb-6">
+                        <img src="assets/mizuki_kuramacb.jpg" alt="Mascota" class="w-20 h-20 rounded-full object-cover border-2 border-[#6C63FF] mx-auto shadow-md">
+                        <h1 class="title-primary text-3xl text-slate-800 dark:text-white mt-3">MangAFliX</h1>
+                        <p class="text-body text-sm text-slate-500 dark:text-slate-400 mt-1">Inicia sesión para continuar</p>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                        <input x-model="email" type="email" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition" placeholder="tu@email.com">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Contraseña</label>
+                        <input x-model="password" type="password" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition" placeholder="••••••••">
+                    </div>
+                    <button @click="login" class="w-full bg-[#6C63FF] hover:bg-[#5A52D5] text-white px-6 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Entrar
+                    </button>
+                    <p class="mt-4 text-center text-sm">
+                        <span class="text-slate-500 dark:text-slate-400">¿No tienes cuenta?</span>
+                        <button @click="goToRegister" class="text-[#6C63FF] hover:underline font-medium ml-1">Registrarse</button>
+                    </p>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="$store.route.component === 'register'">
+            <div x-data="registerPage()" x-transition.duration.300ms>
+                <div class="max-w-md mx-auto mt-10 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                    <div class="text-center mb-6">
+                        <h1 class="title-primary text-3xl text-slate-800 dark:text-white">Crear Cuenta</h1>
+                        <p class="text-body text-sm text-slate-500 dark:text-slate-400 mt-1">Únete a MangAFliX</p>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Usuario</label>
+                        <input x-model="username" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition" placeholder="Nombre de usuario">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                        <input x-model="email" type="email" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition" placeholder="tu@email.com">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Contraseña</label>
+                        <input x-model="password" type="password" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition" placeholder="••••••••">
+                    </div>
+                    <button @click="register" class="w-full bg-[#38D9A9] hover:bg-[#2db88d] text-white px-6 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all">
+                        <i class="fas fa-user-plus mr-2"></i> Crear cuenta
+                    </button>
+                    <p class="mt-4 text-center text-sm">
+                        <span class="text-slate-500 dark:text-slate-400">¿Ya tienes cuenta?</span>
+                        <button @click="goToLogin" class="text-[#6C63FF] hover:underline font-medium ml-1">Inicia sesión</button>
+                    </p>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="$store.route.component === 'dashboard'">
+            <div x-data="dashboardPage()" x-transition.duration.300ms>
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 class="title-primary text-3xl md:text-4xl text-slate-800 dark:text-white">Mis Mangas</h1>
+                        <p class="text-body text-slate-500 dark:text-slate-400 mt-1">Gestiona tu biblioteca</p>
+                    </div>
+                    <button @click="goToCreate" class="bg-[#6C63FF] hover:bg-[#5A52D5] text-white px-6 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all">
+                        <i class="fas fa-plus mr-2"></i> Nuevo
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-3">
+                        <div x-show="loading" class="grid md:grid-cols-2 gap-6">
+                            <template x-for="i in skeletons" :key="i">
+                                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 animate-pulse">
+                                    <div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-3"></div>
+                                    <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full mb-2"></div>
+                                    <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div x-show="!loading && mangas.length" class="grid md:grid-cols-2 gap-6">
+                            <template x-for="manga in mangas" :key="manga.id">
+                                <div @click="goToDetail(manga.id)" class="bg-white dark:bg-slate-800 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 p-5 cursor-pointer hover:border-[#6C63FF] hover:-translate-y-1 group">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <h3 class="text-xl font-bold text-slate-800 dark:text-white truncate" x-text="manga.title"></h3>
+                                                <span x-show="manga.status" class="label bg-[#38D9A9]/10 text-[#38D9A9] text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0" x-text="manga.status"></span>
+                                            </div>
+                                            <p class="text-body text-slate-500 dark:text-slate-400 text-sm line-clamp-2" x-text="manga.description || 'Sin descripción'"></p>
+                                        </div>
+                                        <button @click.stop="deleteManga(manga.id)" class="text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-full transition flex-shrink-0 ml-2" aria-label="Eliminar manga">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                    <div class="mt-4 flex items-center justify-between text-sm">
+                                        <span class="text-slate-400 dark:text-slate-500"><i class="far fa-copy mr-1"></i> <span x-text="manga.chapters_count || 0"></span> capítulos</span>
+                                        <span class="bg-slate-100 dark:bg-slate-700 hover:bg-[#6C63FF]/10 text-slate-600 dark:text-slate-300 group-hover:text-[#6C63FF] px-3 py-1 rounded-full transition text-xs font-medium">Ver detalles <i class="fas fa-chevron-right ml-1 text-xs"></i></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <p x-show="!loading && !mangas.length" class="text-center py-20 text-slate-500 dark:text-slate-400">
+                            <i class="fas fa-book-open text-5xl text-slate-300 dark:text-slate-600 mb-4 block"></i>
+                            No hay mangas todavía. ¡Crea uno!
+                        </p>
+                    </div>
+
+                    <div class="lg:col-span-1">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 p-5 sticky top-24 flex flex-col items-center text-center">
+                            <div class="w-full aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 mb-4">
+                                <img src="assets/mizuki_kuramacb.jpg" alt="Mascota" class="w-full h-full object-cover">
+                            </div>
+                            <h3 class="subtitle text-lg font-semibold text-slate-700 dark:text-white">¡Bienvenido!</h3>
+                            <p class="text-body text-sm text-slate-500 dark:text-slate-400 mt-1">Tu compañero de lectura</p>
+                            <div class="mt-4 w-full bg-slate-100 dark:bg-slate-700/50 rounded-lg p-2 text-xs text-slate-400 italic border border-dashed border-slate-300 dark:border-slate-600">
+                                MangAFliX v1.0
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="$store.route.component === 'mangaCreate'">
+            <div x-data="mangaCreatePage()" x-transition.duration.300ms>
+                <div class="max-w-xl mx-auto mt-6 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                    <h1 class="title-primary text-2xl text-slate-800 dark:text-white mb-6">Crear Manga</h1>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título</label>
+                        <input x-model="title" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition" placeholder="Título del manga">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descripción</label>
+                        <textarea x-model="description" rows="3" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition resize-none" placeholder="Descripción del manga"></textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">URL de portada</label>
+                        <input x-model="cover_url" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition" placeholder="https://ejemplo.com/portada.jpg (opcional)">
+                    </div>
+                    <div class="flex gap-3">
+                        <button @click="save" class="bg-[#6C63FF] hover:bg-[#5A52D5] text-white px-6 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all flex-1">
+                            <i class="fas fa-save mr-2"></i> Crear
+                        </button>
+                        <button @click="cancel" class="border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 px-6 py-2.5 rounded-xl font-medium transition">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="$store.route.component === 'mangaDetail'">
+            <div x-data="mangaDetailPage()" x-transition.duration.300ms>
+                <div x-show="loading" class="animate-pulse space-y-4">
+                    <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
+                    <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div>
+                    <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                </div>
+
+                <div x-show="!loading">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 p-6 mb-6">
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <img x-show="manga.cover_url" :src="manga.cover_url" alt="Portada" class="w-32 h-44 object-cover rounded-xl shadow-md flex-shrink-0">
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <h1 class="title-primary text-3xl text-slate-800 dark:text-white" x-text="manga.title"></h1>
+                                        <span x-show="manga.status" class="label bg-[#38D9A9]/10 text-[#38D9A9] text-xs px-2 py-0.5 rounded-full font-medium inline-block mt-2" x-text="manga.status"></span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button @click="goToCreateChapter" class="bg-[#38D9A9] hover:bg-[#2db88d] text-white px-4 py-2 rounded-xl text-sm font-medium shadow-md hover:shadow-lg transition-all">
+                                            <i class="fas fa-plus mr-1"></i> Capítulo
+                                        </button>
+                                        <button @click="goBack" class="border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2 rounded-xl text-sm font-medium transition">
+                                            <i class="fas fa-arrow-left mr-1"></i> Volver
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-body text-slate-600 dark:text-slate-400 mt-4" x-text="manga.description || 'Sin descripción'"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="subtitle text-2xl font-semibold text-slate-800 dark:text-white mb-4">Capítulos</h2>
+
+                    <div class="space-y-3">
+                        <template x-for="chapter in chapters" :key="chapter.id">
+                            <div @click="goToReader(chapter.id)" class="bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-md transition-all border border-slate-200 dark:border-slate-700 p-4 cursor-pointer hover:border-[#6C63FF] hover:-translate-y-0.5 flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-[#6C63FF]/10 dark:bg-[#6C63FF]/20 flex items-center justify-center text-[#6C63FF] group-hover:bg-[#6C63FF] group-hover:text-white transition">
+                                        <i class="fas fa-book-open"></i>
+                                    </div>
+                                    <div>
+                                        <span class="font-semibold text-slate-800 dark:text-white" x-text="'Capítulo ' + (chapter.chapter_number || chapter.number)"></span>
+                                        <span x-show="chapter.title" class="text-slate-500 dark:text-slate-400 text-sm ml-2" x-text="chapter.title"></span>
+                                    </div>
+                                </div>
+                                <i class="fas fa-chevron-right text-slate-400 group-hover:text-[#6C63FF] transition"></i>
+                            </div>
+                        </template>
+                    </div>
+
+                    <p x-show="!chapters.length" class="text-center py-10 text-slate-500 dark:text-slate-400">
+                        <i class="fas fa-file-alt text-4xl text-slate-300 dark:text-slate-600 mb-3 block"></i>
+                        Este manga no tiene capítulos todavía.
+                    </p>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="$store.route.component === 'chapterCreate'">
+            <div x-data="chapterCreatePage()" x-transition.duration.300ms>
+                <div class="max-w-xl mx-auto mt-6 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                    <h1 class="title-primary text-2xl text-slate-800 dark:text-white mb-6">Nuevo Capítulo</h1>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Número</label>
+                        <input x-model="number" type="number" step="1" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition" placeholder="Ej: 1">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título</label>
+                        <input x-model="title" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition" placeholder="Título del capítulo (opcional)">
+                    </div>
+
+                    <h2 class="font-semibold text-slate-700 dark:text-slate-300 mb-3">Páginas</h2>
+
+                    <template x-for="(page, index) in pages" :key="index">
+                        <div class="flex gap-2 mb-2">
+                            <input x-model="pages[index]" :placeholder="'URL página ' + (index + 1)" class="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6C63FF]/30 focus:border-[#6C63FF] transition text-sm">
+                            <button @click="removePage(index)" class="bg-red-500 hover:bg-red-600 text-white px-3 rounded-lg transition text-sm" aria-label="Eliminar página">✕</button>
+                        </div>
+                    </template>
+
+                    <button @click="addPage" class="border border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2 rounded-lg transition w-full text-sm mb-6">
+                        <i class="fas fa-plus mr-1"></i> Añadir página
+                    </button>
+
+                    <div class="flex gap-3">
+                        <button @click="save" class="bg-[#38D9A9] hover:bg-[#2db88d] text-white px-6 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all flex-1">
+                            <i class="fas fa-save mr-2"></i> Guardar capítulo
+                        </button>
+                        <button @click="cancel" class="border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 px-6 py-2.5 rounded-xl font-medium transition">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="$store.route.component === 'reader'">
+            <div x-data="readerPage()" @keydown.window="handleKeydown" class="min-h-[80vh] flex flex-col">
+                <div x-show="loading" class="flex-1 flex items-center justify-center">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-4xl text-[#6C63FF] mb-4"></i>
+                        <p class="text-slate-500 dark:text-slate-400">Cargando capítulo...</p>
+                    </div>
+                </div>
+
+                <div x-show="!loading" class="flex-1 flex flex-col">
+                    <div class="flex items-center justify-center gap-4 mb-4">
+                        <button @click="prevPage()" :disabled="$store.reader.currentPage === 0" class="bg-slate-700 hover:bg-slate-600 disabled:opacity-30 text-white px-5 py-2.5 rounded-xl transition font-medium" aria-label="Página anterior">
+                            <i class="fas fa-chevron-left mr-1"></i> Anterior
+                        </button>
+                        <span class="text-lg font-medium text-slate-700 dark:text-slate-300" x-text="'Página ' + ($store.reader.currentPage + 1) + ' de ' + $store.reader.pages.length"></span>
+                        <button @click="nextPage()" :disabled="$store.reader.currentPage >= $store.reader.pages.length - 1" class="bg-slate-700 hover:bg-slate-600 disabled:opacity-30 text-white px-5 py-2.5 rounded-xl transition font-medium" aria-label="Página siguiente">
+                            Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 flex items-center justify-center bg-gray-900 dark:bg-black rounded-2xl overflow-hidden p-4">
+                        <template x-if="$store.reader.pages.length > 0">
+                            <img :src="$store.reader.pages[$store.reader.currentPage].image_url" alt="Página" class="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl" loading="lazy">
+                        </template>
+                    </div>
+
+                    <div class="mt-4 flex flex-col items-center gap-2">
+                        <div class="w-full max-w-md h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-[#6C63FF] transition-all duration-300 rounded-full" :style="'width: ' + ($store.reader.pages.length ? (($store.reader.currentPage + 1) / $store.reader.pages.length * 100) : 0) + '%'"></div>
+                        </div>
+                        <div class="flex gap-1.5 flex-wrap justify-center">
+                            <template x-for="(page, index) in $store.reader.pages" :key="index">
+                                <button @click="goToPage(index)" :class="index === $store.reader.currentPage ? 'bg-[#6C63FF]' : 'bg-slate-300 dark:bg-slate-600'" class="w-2.5 h-2.5 rounded-full transition hover:scale-125" :aria-label="'Ir a página ' + (index + 1)"></button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <button @click="goBack" class="border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 px-6 py-2 rounded-xl transition text-sm font-medium">
+                            <i class="fas fa-arrow-left mr-1"></i> Volver al manga
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="$store.route.component === 'notFound'">
+            <div x-transition.duration.300ms class="text-center py-20">
+                <i class="fas fa-exclamation-triangle text-6xl text-yellow-400 mb-4"></i>
+                <h1 class="title-primary text-3xl text-slate-800 dark:text-white">404 - Página no encontrada</h1>
+                <p class="text-body text-slate-500 dark:text-slate-400 mt-2">La ruta que buscas no existe.</p>
+                <button @click="Alpine.store('route').navigate('dashboard')" class="mt-6 bg-[#6C63FF] hover:bg-[#5A52D5] text-white px-6 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all">
+                    <i class="fas fa-home mr-2"></i> Volver al dashboard
+                </button>
+            </div>
+        </template>
+
+    </div>
+
+    <div x-data class="fixed bottom-4 right-4 space-y-2 z-50">
+        <template x-for="notif in $store.notifications.items" :key="notif.id">
+            <div :class="notif.type === 'error' ? 'bg-red-500' : 'bg-[#38D9A9]'"
+                 class="text-white px-6 py-3 rounded-xl shadow-lg max-w-md transition-all duration-300 flex items-center gap-3"
+                 x-init="setTimeout(() => $store.notifications.remove(notif.id), 3500)">
+                <i :class="notif.type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle'"></i>
+                <span class="flex-1" x-text="notif.message"></span>
+                <button @click="$store.notifications.remove(notif.id)" class="text-white/80 hover:text-white transition">✕</button>
+            </div>
+        </template>
+    </div>
+
+</div>
+
+<script>
+function appShell() {
+    return {
+        init() {
+            Alpine.store('auth').init();
+            Alpine.store('theme').init();
+
+            const route = Alpine.store('route');
+            const parsed = route.parseHash(location.hash);
+            route.component = parsed.component;
+            route.params = parsed.params;
+
+            if (Alpine.store('auth').token) {
+                if (route.component === 'login' || route.component === 'register') {
+                    route.navigate('dashboard');
+                }
+            } else if (route.component !== 'login' && route.component !== 'register') {
+                route.navigate('login');
+            }
+        }
+    };
+}
+</script>
+
 </body>
 </html>

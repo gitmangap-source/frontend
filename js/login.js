@@ -1,25 +1,22 @@
 function loginPage() {
-
     return {
-        email: "",
-        password: "",
+        email: '',
+        password: '',
 
         async login() {
-            if (!this.email || !this.password) { alert("Completa todos los campos"); return; }
-
-            try {
-                const result = await api("/auth/login", {
-                    method: "POST",
-                    body: JSON.stringify({
-                        email: this.email,
-                        password: this.password
-                    })
-                });
-                localStorage.setItem("token", result.access_token);
-                location.href = "dashboard.html";
-            } catch (e) {
-                alert(e.message);
+            if (!this.email || !this.password) {
+                Alpine.store('notifications').add('Completa todos los campos', 'error');
+                return;
             }
+            try {
+                await Alpine.store('auth').login(this.email, this.password);
+            } catch (e) {
+                Alpine.store('notifications').add(e.message, 'error');
+            }
+        },
+
+        goToRegister() {
+            Alpine.store('route').navigate('register');
         }
     };
 }

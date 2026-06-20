@@ -1,28 +1,46 @@
-function reader() {
-
+function readerPage() {
     return {
-        chapterId: new URLSearchParams(location.search).get("chapter_id"),
-        pages: [],
-        currentPage: 0,
+        loading: true,
 
-        async load() {
-            try {
-                const data = await api("/reader/read/" + this.chapterId);
-                this.pages = data.pages || [];
-            } catch(e) {
-                alert(e.message);
+        get chapterId() {
+            return Alpine.store('route').params.chapter_id;
+        },
+
+        init() {
+            if (!this.chapterId) {
+                Alpine.store('notifications').add('ID de capítulo no especificado', 'error');
+                Alpine.store('route').navigate('dashboard');
+                return;
             }
+            this.loading = true;
+            Alpine.store('reader').load(this.chapterId).then(() => {
+                this.loading = false;
+            });
         },
 
         nextPage() {
-            if (this.currentPage < this.pages.length - 1) {
-                this.currentPage++;
-            }
+            Alpine.store('reader').nextPage();
         },
 
         prevPage() {
-            if (this.currentPage > 0) {
-                this.currentPage--;
+            Alpine.store('reader').prevPage();
+        },
+
+        goToPage(index) {
+            Alpine.store('reader').currentPage = index;
+        },
+
+        handleKeydown(e) {
+            if (e.key === 'ArrowRight') { Alpine.store('reader').nextPage(); e.preventDefault(); }
+            if (e.key === 'ArrowLeft') { Alpine.store('reader').prevPage(); e.preventDefault(); }
+        },
+
+        goBack() {
+            const mangaId = Alpine.store('route').params.manga_id;
+            if (mangaId) {
+                Alpine.store('route').navigate('mangaDetail', { id: mangaId });
+            } else {
+                Alpine.store('route').navigate('dashboard');
             }
         }
     };
