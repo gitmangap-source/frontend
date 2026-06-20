@@ -28,6 +28,12 @@
         class="w-full border p-3 mb-3"
     ></textarea>
 
+    <input
+        x-model="cover_url"
+        placeholder="URL de portada (opcional)"
+        class="w-full border p-3 mb-3"
+    >
+
     <div class="flex gap-3">
         <button
             @click="save"
@@ -47,23 +53,24 @@ function createManga() {
 
         title: "",
         description: "",
+        cover_url: "",
 
         async save() {
-
             try {
-                await api(
-                    "/mangas",
-                    {
-                        method: "POST",
-                        body: JSON.stringify({
-                            title: this.title,
-                            description: this.description
-                        })
-                    }
-                );
+                const body = {
+                    title: this.title,
+                    description: this.description
+                };
+                if (this.cover_url.trim()) {
+                    body.cover_url = this.cover_url.trim();
+                }
 
-                location.href =
-                    "dashboard.html";
+                await api("/mangas", {
+                    method: "POST",
+                    body: JSON.stringify(body)
+                });
+
+                location.href = "dashboard.html";
             } catch(e) {
                 alert(e.message);
             }

@@ -30,7 +30,7 @@
         <template x-for="chapter in chapters" :key="chapter.id">
             <a :href="'reader.html?chapter_id=' + chapter.id"
                class="block border p-4 rounded hover:bg-gray-50">
-                <span class="font-semibold" x-text="'Cap&iacute;tulo ' + chapter.number"></span>
+                <span class="font-semibold" x-text="'Cap&iacute;tulo ' + (chapter.chapter_number || chapter.number)"></span>
                 <span class="text-gray-500 ml-2" x-text="chapter.title"></span>
             </a>
         </template>
@@ -52,7 +52,11 @@ function mangaDetail() {
         async load() {
             try {
                 this.manga = await api("/mangas/" + this.id);
-                this.chapters = await api("/mangas/" + this.id + "/chapters");
+                try {
+                    this.chapters = await api("/mangas/" + this.id + "/chapters");
+                } catch(e) {
+                    this.chapters = [];
+                }
             } catch(e) {
                 alert(e.message);
             }

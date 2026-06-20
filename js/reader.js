@@ -7,8 +7,8 @@ function reader() {
 
         async load() {
             try {
-                const chapter = await api("/chapters/" + this.chapterId);
-                this.pages = chapter.pages || [];
+                const data = await api("/reader/read/" + this.chapterId);
+                this.pages = data.pages || [];
             } catch(e) {
                 alert(e.message);
             }

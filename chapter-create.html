@@ -13,7 +13,7 @@
 
     <h1 class="text-3xl font-bold mb-5">Nuevo Cap&iacute;tulo</h1>
 
-    <input x-model="number" type="number" step="0.1" placeholder="N&uacute;mero"
+    <input x-model="number" type="number" step="1" placeholder="N&uacute;mero"
            class="w-full border p-3 mb-3">
 
     <input x-model="title" placeholder="T&iacute;tulo (opcional)"
@@ -53,14 +53,25 @@ function createChapter() {
 
         async save() {
             try {
-                await api("/mangas/" + this.mangaId + "/chapters", {
+                const chapter = await api("/chapters/manga/" + this.mangaId, {
                     method: "POST",
                     body: JSON.stringify({
-                        number: parseFloat(this.number),
-                        title: this.title,
-                        pages: this.pages.filter(p => p.trim() !== "")
+                        title: this.title || "Cap\u00edtulo " + this.number,
+                        chapter_number: parseInt(this.number)
                     })
                 });
+                const pagesToSend = this.pages
+                    .filter(p => p.trim() !== "")
+                    .map((url, index) => ({
+                        image_url: url,
+                        page_number: index + 1
+                    }));
+                if (pagesToSend.length > 0) {
+                    await api("/chapters/" + chapter.id + "/pages", {
+                        method: "POST",
+                        body: JSON.stringify(pagesToSend)
+                    });
+                }
                 location.href = "manga-detail.html?id=" + this.mangaId;
             } catch(e) {
                 alert(e.message);

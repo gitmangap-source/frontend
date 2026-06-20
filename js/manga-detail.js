@@ -8,7 +8,11 @@ function mangaDetail() {
         async load() {
             try {
                 this.manga = await api("/mangas/" + this.id);
-                this.chapters = await api("/mangas/" + this.id + "/chapters");
+                try {
+                    this.chapters = await api("/mangas/" + this.id + "/chapters");
+                } catch(e) {
+                    this.chapters = [];
+                }
             } catch(e) {
                 alert(e.message);
             }

@@ -5,6 +5,8 @@ function loginPage() {
         password: "",
 
         async login() {
+            if (!this.email || !this.password) { alert("Completa todos los campos"); return; }
+
             try {
                 const result = await api("/auth/login", {
                     method: "POST",

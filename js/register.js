@@ -6,6 +6,8 @@ function registerPage() {
         password: "",
 
         async register() {
+            if (!this.username || !this.email || !this.password) { alert("Completa todos los campos"); return; }
+
             try {
                 await api("/auth/register", {
                     method: "POST",

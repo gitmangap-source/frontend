@@ -26,7 +26,7 @@
 
     <div class="mt-20 mb-10">
         <template x-if="pages.length > 0">
-            <img :src="pages[currentPage]" alt="P&aacute;gina" class="max-w-full max-h-[90vh]">
+            <img :src="pages[currentPage].image_url" alt="P&aacute;gina" class="max-w-full max-h-[90vh]">
         </template>
         <p x-show="!pages.length" class="text-white text-xl py-20">Cargando...</p>
     </div>
@@ -52,8 +52,8 @@ function reader() {
 
         async load() {
             try {
-                const chapter = await api("/chapters/" + this.chapterId);
-                this.pages = chapter.pages || [];
+                const data = await api("/reader/read/" + this.chapterId);
+                this.pages = data.pages || [];
             } catch(e) {
                 alert(e.message);
             }
